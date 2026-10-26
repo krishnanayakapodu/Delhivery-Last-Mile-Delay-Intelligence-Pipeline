@@ -68,3 +68,51 @@ PART A:
 
 &#x20;  - Source: outputs/part\_a\_checks.csv
 
+
+
+
+
+PART B:
+
+## Regression findings
+
+
+
+1\. Model Selection
+
+&#x20;  - Among the evaluated models, Linear Regression achieved the lowest validation RMSE of 4.8912 hours and was selected as the final model.
+
+
+
+2\. Baseline Performance
+
+&#x20;  - The baseline model produced an R² score of -0.0212, indicating that predicting the average delivery time provides little predictive value for this dataset.
+
+
+
+3\. Decision Tree Depth Comparison
+
+&#x20;  - A maximum depth of 6 produced the best validation performance.
+
+&#x20;  - The depth-1 tree showed high training and validation errors, indicating underfitting.
+
+&#x20;  - The unrestricted tree achieved zero training RMSE but a validation RMSE of 7.7890, suggesting overfitting.
+
+
+
+4\. Learning Rate Evaluation
+
+&#x20;  - A learning rate of 0.1 provided the best results among the tested values.
+
+&#x20;  - The 0.01 learning rate learned too slowly with 100 estimators, while 1.0 was too aggressive and overshot, leading to poorer validation performance.  
+
+
+
+5\. Cross-Validation Results
+
+&#x20;  - Gradient Boosting achieved a slightly better average cross-validation score than Linear Regression.
+
+&#x20;  - However, final model selection was based on validation RMSE, where Linear Regression performed better.
+
+&#x20;  - The selected Linear Regression model achieved a test R² score of 0.9493.
+
