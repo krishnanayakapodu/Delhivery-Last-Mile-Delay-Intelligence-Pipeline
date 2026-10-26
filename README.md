@@ -1,190 +1,156 @@
-PART A:
+\# Delhivery Last-Mile Delay Intelligence Pipeline
 
-## Data findings
 
 
+This project uses synthetic shipment data to analyze delivery delays, predict late parcels, and group hubs by observed performance.
 
-1\. Service-Level Delay Analysis
 
-&#x20;  - Express shipments recorded the highest delay rate (48.97%), followed by Standard (20.56%) and Economy (8.57%).
 
-&#x20;  - The observed ordering of delay rates is Express > Standard > Economy.
+\## How to run
 
-&#x20;  - Source: outputs/part\_a\_delay\_by\_group.csv
 
 
+Windows Git CMD commands from a fresh clone:
 
-2\. Hub Tier Impact
 
-&#x20;  - Delay rates increased from 4.00% for Tier 1 hubs to 44.00% for Tier 3 hubs.
 
-&#x20;  - This represents a 40 percentage-point increase across hub tiers.
+```cmd
 
-&#x20;  - Source: outputs/part\_a\_delay\_by\_group.csv
+git clone https://github.com/krishnanayakapodu/Delhivery-Last-Mile-Delay-Intelligence-Pipeline.git
 
+cd Delhivery-Last-Mile-Delay-Intelligence-Pipeline
 
+py -3 -m venv .venv
 
-3\. Distance-Based Delay Distribution
+.venv\\Scripts\\python.exe -m pip install -r requirements.txt
 
-&#x20;  - Delay rates by distance band were:
+.venv\\Scripts\\python.exe generate\_data.py
 
-&#x20;    - 0-200 km: 2.19%
+.venv\\Scripts\\python.exe part\_a\_clean\_eda.py
 
-&#x20;    - 201-400 km: 13.68%
+.venv\\Scripts\\python.exe part\_b\_regression.py
 
-&#x20;    - 401-600 km: 43.64%
+.venv\\Scripts\\python.exe part\_c\_classification.py
 
-&#x20;    - 601+ km: 85.23%
+.venv\\Scripts\\python.exe part\_d\_segments.py
 
-&#x20;  - The observed delay rate increases monotonically with shipment distance.
+.venv\\Scripts\\python.exe package\_model.py
 
-&#x20;  - Source: outputs/part\_a\_delay\_by\_group.csv
+.venv\\Scripts\\python.exe predict\_delay.py
 
+```
 
 
-4\. Correlation Analysis
 
-&#x20;  - Variables with the strongest positive correlation with delivery hours were:
+`package\_model.py` regenerates `models/delay\_model.pkl`. The committed pickle is reliable only with the scikit-learn version pinned in `requirements.txt`. If the grader has a different version, it should rerun `package\_model.py`.
 
-&#x20;    - promised\_hours: +0.8372
 
-&#x20;    - distance\_km: +0.4013
 
-&#x20;    - n\_stops: +0.3247
+\## Data findings — Part A
 
-&#x20;  - Among the evaluated features, promised\_hours is the most strongly correlated with delivery hours.
 
-&#x20;  - Source: outputs/part\_a\_correlations.csv
 
+\- Cleaning removed 24 duplicate rows, leaving 1,200 shipments. The modelling table has 278 delayed parcels (23.17%) and no missing model features or target values.
 
+\- Delay rates were 48.97% for Express, 20.56% for Standard, and 8.57% for Economy. Rates rose from 2.19% for parcels up to 200 km to 85.23% for parcels over 600 km.
 
-5\. Log Transformation Assessment
+\- The strongest positive correlations with delivery hours were promised hours (0.8372), distance (0.4013), and number of stops (0.3247).
 
-&#x20;  - The imputed declared\_value\_inr variable had a mean of INR 1,533.05 and a median of INR 1,121.50, resulting in a mean-median gap of INR 411.55.
 
-&#x20;  - After log transformation, the mean and median were 7.0277 and 7.0224, respectively, reducing the gap to 0.0053 log units.
 
-&#x20;  - The reduced mean-median gap is consistent with the compression of high-value observations in the upper tail of the distribution.
+See `outputs/part\_a\_checks.csv`, `outputs/part\_a\_delay\_by\_group.csv`, and `outputs/part\_a\_correlations.csv`.
 
-&#x20;  - Source: outputs/part\_a\_checks.csv
 
 
+\## Model results (regression) — Part B
 
 
 
-PART B:
+\- The mean baseline had validation R² of −0.0212. Linear regression won validation with RMSE of 4.8912 hours; its test R² was 0.9493.
 
-## Regression findings
+\- Tree depth 6 had the lowest validation RMSE. Depth 1 had high training and validation errors; the unlimited tree had 0.0000 training RMSE and 7.7890 validation RMSE, indicating overfitting.
 
+\- Gradient boosting learning rate 0.1 performed best. At 0.01, learning was too slow; at 1.0, it overshot.
 
+\- Cross-validation ranked gradient boosting above linear regression (mean R² 0.9352 vs 0.9261), but linear regression remained the choice because it had lower validation RMSE.
 
-1\. Model Selection
 
-&#x20;  - Among the evaluated models, Linear Regression achieved the lowest validation RMSE of 4.8912 hours and was selected as the final model.
 
+See the `outputs/part\_b\_\*.csv` files.
 
 
-2\. Baseline Performance
 
-&#x20;  - The baseline model produced an R² score of -0.0212, indicating that predicting the average delivery time provides little predictive value for this dataset.
+\## Model results (classification) — Part C
 
 
 
-3\. Decision Tree Depth Comparison
+\- The blind baseline had 0.7667 accuracy but found no delayed parcels.
 
-&#x20;  - A maximum depth of 6 produced the best validation performance.
+\- The top seven features were distance, hub tier, hub capacity, stops, promised hours, rain, and sale-event flag. The five noise columns contributed 22.45% of the 17-feature forest importance.
 
-&#x20;  - The depth-1 tree showed high training and validation errors, indicating underfitting.
+\- Selecting seven features gave the best validation F1 (0.8333). The untuned forest beat grid search (0.7750) and randomized search (0.7848) on validation F1.
 
-&#x20;  - The unrestricted tree achieved zero training RMSE but a validation RMSE of 7.7890, suggesting overfitting.
+\- Threshold 0.5 was the highest tested threshold with validation recall of at least 0.80. On test data, precision was 0.6889, recall 0.7561, and F1 0.7209. The test set had 41 delayed parcels.
 
 
 
-4\. Learning Rate Evaluation
+See the `outputs/part\_c\_\*.csv` files.
 
-&#x20;  - A learning rate of 0.1 provided the best results among the tested values.
 
-&#x20;  - The 0.01 learning rate learned too slowly with 100 estimators, while 1.0 was too aggressive and overshot, leading to poorer validation performance.
 
+\## Operations recommendation — Part D
 
 
-5\. Cross-Validation Results
 
-&#x20;  - Gradient Boosting achieved a slightly better average cross-validation score than Linear Regression.
+The Escalate hubs are HUB13 Nagpur (0.46), HUB15 Kochi (0.36), HUB17 Patna (0.46), HUB18 Ranchi (0.38), HUB19 Guwahati (0.62), HUB20 Raipur (0.48), HUB21 Bhubaneswar (0.40), HUB23 Siliguri (0.44), and HUB24 Agartala (0.54).
 
-&#x20;  - However, final model selection was based on validation RMSE, where Linear Regression performed better.
 
-&#x20;  - The selected Linear Regression model achieved a test R² score of 0.9493.
 
+Tier mismatches are HUB07 Kolkata (Tier 1, Watch), HUB13 Nagpur (Tier 2, Escalate), HUB15 Kochi (Tier 2, Escalate), and HUB22 Dehradun (Tier 3, Watch). Use observed segment performance when selecting a playbook; tier alone can be misleading.
 
 
 
+The new-parcel batch had 8 of 48 parcels flagged: 6 for hub-manager escalation and 2 for proactive customer calls.
 
 
 
-PART C:
+K=3 was retained because operations requires three playbooks and its smallest cluster has 7 hubs. Although the separation ratio rises from 5.3928 at K=3 to 6.3047 at K=4 and 6.8866 at K=5, K=4 has a 4-hub cluster and K=5 has clusters of 4, 3, and 2 hubs.
 
 
 
-\## Model results (classification)
+See `outputs/part\_d\_separation.csv`, `outputs/segment\_profile.csv`, `outputs/tier\_vs\_segment\_mismatch.csv`, and `outputs/new\_shipment\_actions.csv`.
 
 
 
-1\. Baseline Performance
+\## Production plan
 
-&#x20;  - The blind baseline achieved an accuracy of 0.7667 by predicting the majority class for every validation parcel.
 
-&#x20;  - While the accuracy appears relatively high, the model does not distinguish between delayed and non-delayed parcels, making it of limited practical value for delay prediction.
 
+\- \*\*Accuracy:\*\* review `outputs/part\_b\_metrics.csv` and `outputs/part\_c\_final\_test.csv`.
 
+\- \*\*Reliability:\*\* `outputs/part\_d\_reload\_check.csv` checks that the packaged model reloads consistently.
 
-2\. Feature Importance Analysis
+\- \*\*Reproducibility:\*\* fixed random seeds and pinned package versions are used.
 
-&#x20;  - The seven selected features were:
+\- \*\*Consistency and maintainability:\*\* `src/shipment\_prep.py` shares preprocessing between training and scoring.
 
-&#x20;    - distance\_km
+\- \*\*Monitoring:\*\* investigate if weekly delay share exceeds 30%, if more than 25% of parcels are flagged, or if recall on known outcomes falls below 0.70.
 
-&#x20;    - hub\_tier
+\- Retrain quarterly, or sooner if monitoring shows sustained problems. Compare the 15–28 September sale period with similar sale periods, not ordinary weeks. Watch for changes in service mix, distance, stops, hub characteristics, and sale-event share.
 
-&#x20;    - hub\_daily\_capacity
 
-&#x20;    - n\_stops
 
-&#x20;    - promised\_hours
+\## Limitations
 
-&#x20;    - rain\_flag
 
-&#x20;    - sale\_event\_flag
 
-&#x20;  - These features captured most of the predictive signal in the dataset.
+\- The data is synthetic and may not represent real logistics operations.
 
-&#x20;  - The combined Random Forest importance assigned to the noise features was 0.2245 (22.45%), indicating that the majority of feature importance was concentrated in the selected signal variables.
+\- The test set contains only 41 delayed parcels, so classification metrics may be sensitive to a small number of cases.
 
+\- The threshold was selected using one validation split.
 
+\- The model lacks real-time information such as traffic, sudden weather changes, staffing, and vehicle disruptions.
 
-3\. Feature Selection and Tuning
-
-&#x20;  - Seven features (k=7) were selected because they provided the best validation performance during feature selection.
-
-&#x20;  - The untuned Random Forest trained on the selected features achieved a validation F1 score of 0.8333.
-
-&#x20;  - This outperformed both Grid Search tuning (0.7750) and Randomized Search tuning (0.7848), so the untuned model was retained as the final classifier.
-
-
-
-4\. Classification Threshold Selection
-
-&#x20;  - The operational requirement prioritized recall when selecting the classification threshold.
-
-&#x20;  - A threshold of 0.5 achieved a validation recall of 0.8333, compared with 0.7619 at a threshold of 0.6.
-
-&#x20;  - Threshold 0.5 was the highest tested threshold with validation recall of at least 0.80 and was therefore selected for the final model.
-
-
-
-5\. Test Set Performance
-
-&#x20;  - On the test set, the final model achieved precision of 0.6889, recall of 0.7561, and an F1 score of 0.7209.
-
-&#x20;  - Test recall was below validation recall (0.8333). The test set had only 41 delayed parcels, so its recall estimate may be sensitive to a few parcels.
+\- Hub segments depend on the selected profile features and clustering settings.
 
