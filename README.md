@@ -104,7 +104,7 @@ PART B:
 
 &#x20;  - A learning rate of 0.1 provided the best results among the tested values.
 
-&#x20;  - The 0.01 learning rate learned too slowly with 100 estimators, while 1.0 was too aggressive and overshot, leading to poorer validation performance.  
+&#x20;  - The 0.01 learning rate learned too slowly with 100 estimators, while 1.0 was too aggressive and overshot, leading to poorer validation performance.
 
 
 
@@ -115,4 +115,76 @@ PART B:
 &#x20;  - However, final model selection was based on validation RMSE, where Linear Regression performed better.
 
 &#x20;  - The selected Linear Regression model achieved a test R² score of 0.9493.
+
+
+
+
+
+
+
+PART C:
+
+
+
+\## Model results (classification)
+
+
+
+1\. Baseline Performance
+
+&#x20;  - The blind baseline achieved an accuracy of 0.7667 by predicting the majority class for every validation parcel.
+
+&#x20;  - While the accuracy appears relatively high, the model does not distinguish between delayed and non-delayed parcels, making it of limited practical value for delay prediction.
+
+
+
+2\. Feature Importance Analysis
+
+&#x20;  - The seven selected features were:
+
+&#x20;    - distance\_km
+
+&#x20;    - hub\_tier
+
+&#x20;    - hub\_daily\_capacity
+
+&#x20;    - n\_stops
+
+&#x20;    - promised\_hours
+
+&#x20;    - rain\_flag
+
+&#x20;    - sale\_event\_flag
+
+&#x20;  - These features captured most of the predictive signal in the dataset.
+
+&#x20;  - The combined Random Forest importance assigned to the noise features was 0.2245 (22.45%), indicating that the majority of feature importance was concentrated in the selected signal variables.
+
+
+
+3\. Feature Selection and Tuning
+
+&#x20;  - Seven features (k=7) were selected because they provided the best validation performance during feature selection.
+
+&#x20;  - The untuned Random Forest trained on the selected features achieved a validation F1 score of 0.8333.
+
+&#x20;  - This outperformed both Grid Search tuning (0.7750) and Randomized Search tuning (0.7848), so the untuned model was retained as the final classifier.
+
+
+
+4\. Classification Threshold Selection
+
+&#x20;  - The operational requirement prioritized recall when selecting the classification threshold.
+
+&#x20;  - A threshold of 0.5 achieved a validation recall of 0.8333, compared with 0.7619 at a threshold of 0.6.
+
+&#x20;  - Threshold 0.5 was the highest tested threshold with validation recall of at least 0.80 and was therefore selected for the final model.
+
+
+
+5\. Test Set Performance
+
+&#x20;  - On the test set, the final model achieved precision of 0.6889, recall of 0.7561, and an F1 score of 0.7209.
+
+&#x20;  - Test recall was below validation recall (0.8333). The test set had only 41 delayed parcels, so its recall estimate may be sensitive to a few parcels.
 
